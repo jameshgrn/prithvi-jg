@@ -15,7 +15,7 @@ for i, time_interval in enumerate(time_intervals):
     data = load(search.items(), bbox=tas_bbox, groupby="solar_day", chunks={})
     print(data.variables)
     # Assuming 'narrow_nir', 'swir1', and 'swir2' are the names of the bands in the dataset
-    bands_to_save = ['blue', 'green', 'red', 'nir', 'swir16', 'swir22']
+    bands_to_save = ['blue', 'green', 'red', 'nir', 'swir16', 'swir2']
     band_count = len(bands_to_save)
     # Save the specified bands of the image to a tif file
     with rasterio.open(output_files[i], 'w', driver='GTiff', 
