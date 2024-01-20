@@ -257,6 +257,7 @@ def main(data_files: List[str], yaml_file_path: str, checkpoint: str, output_dir
     bands = params['train_params']['bands']
     mean = params['train_params']['data_mean']
     std = params['train_params']['data_std']
+    batch_size = 4
 
     # model related
     depth = params['model_args']['depth']
