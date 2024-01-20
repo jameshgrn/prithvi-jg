@@ -8,7 +8,7 @@ tas_bbox = [146.5, -43.6, 146.7, -43.4]
 
 # Define the time intervals
 time_intervals = ["2023-01", "2023-06", "2023-12"]
-output_files = ["/N/u/jhgearon/Quartz/prithvi-jg/images/t1.tif", "/N/u/jhgearon/Quartz/prithvi-jg/images/t2.tif", "/N/u/jhgearon/Quartz/prithvi-jg/images/t3.tif"]
+output_files = ["/N/u/jhgearon/Quartz/prithvi-jg/images/t1.tif", "/N/u/jhgearon/Quartz/prithvi_jg/images/t2.tif", "/N/u/jhgearon/Quartz/prithvi_jg/images/t3.tif"]
 
 for i, time_interval in enumerate(time_intervals):
     search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval)
