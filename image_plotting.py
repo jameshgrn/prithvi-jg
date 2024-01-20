@@ -44,6 +44,6 @@ for i in range(3):
 
 # Adjust layout
 plt.tight_layout()
-plt.savefig('output/plot.png', dpi=300)
+plt.savefig('output/plot.png', dpi=75)
 plt.show()
 
