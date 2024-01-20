@@ -12,6 +12,7 @@ output_files = ["/N/u/jhgearon/Quartz/prithvi-jg/images/t1.tif", "/N/u/jhgearon/
 for i, time_interval in enumerate(time_intervals):
     search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval)
     data = load(search.items(), bbox=tas_bbox, groupby="solar_day", chunks={})
+    crs = data['spatial_ref'].values
     bands_to_save = ['blue', 'green', 'red', 'nir', 'swir16', 'swir22']
     band_count = len(bands_to_save)
     # Save the specified bands of the image to a tif file
@@ -19,6 +20,7 @@ for i, time_interval in enumerate(time_intervals):
                        height=data['red'].shape[1], 
                        width=data['red'].shape[2], 
                        count=band_count, 
+                       crs=crs,
                        dtype=data['red'].dtype) as dst:
         for j, band in enumerate(bands_to_save):
             dst.write(data[band].isel(time=0).values, j + 1)
