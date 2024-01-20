@@ -24,6 +24,6 @@ t1="${img_path}t1.tif"
 t2="${img_path}t2.tif"
 t3="${img_path}t3.tif"
 
-cd /N/u/jhgearon/Quartz/Prithvi_100m
+cd /N/u/jhgearon/Quartz/Prithvi-100m
 
 python Prithvi_run_inference.py --data_files $t1 $t2 $t3 --yaml_file_path Prithvi_100M_config.yaml --checkpoint /Prithvi_100.pth --output_dir /N/u/jhgearon/Quartz/prithvi_jg/output --mask_ratio 0.5
