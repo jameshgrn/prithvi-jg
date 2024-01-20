@@ -13,14 +13,6 @@ output_files = ["/N/u/jhgearon/Quartz/prithvi_jg/images/t1.tif", "/N/u/jhgearon/
 for i, time_interval in enumerate(time_intervals):
     search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval)
     data = load(search.items(), bbox=tas_bbox, groupby="solar_day", chunks={})
-    # Assuming 'narrow_nir', 'swir1', and 'swir2' are the names of the bands in the dataset
-    bands_to_save = ['blue', 'green', 'red', 'narrow_nir', 'swir1', 'swir2']
-    band_count = len(bands_to_save)
-    # Save the specified bands of the image to a tif file
-    with rasterio.open(output_files[i], 'w', driver='GTiff', 
-                       height=data['red'].shape[1], 
-                       width=data['red'].shape[2], 
-                       count=band_count, 
-                       dtype=data['red'].dtype) as dst:
-        for j, band in enumerate(bands_to_save):
-            dst.write(data[band].isel(time=0).values, j + 1)
+    # Save the red, green, blue bands of the image to a tif file
+    with rasterio.open(output_files[i], 'w', driver='GTiff', height=data['red'].shape[1], width=data['red'].shape[2], count=3, dtype=data['red'].dtype) as dst:
+        dst.write(data[["red", "green", "blue"]].isel(time=0).to_array())
