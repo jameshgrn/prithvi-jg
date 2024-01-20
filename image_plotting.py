@@ -1,4 +1,5 @@
 import matplotlib.pyplot as plt
+import numpy as np
 import rasterio
 
 # Define file paths for the TIFFs, masks, and predictions
