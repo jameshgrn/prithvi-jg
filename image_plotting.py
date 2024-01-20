@@ -4,8 +4,8 @@ import rasterio
 
 # Define file paths for the TIFFs, masks, and predictions
 tiff_files = ["images/t1.tif", "images/t2.tif", "images/t3.tif"]
-mask_files = ["output/mask1.tif", "output/mask2.tif", "output/mask3.tif"]
-prediction_files = ["output/pred1.tif", "output/pred2.tif", "output/pred3.tif"]
+mask_files = ["output/mask_t1.tiff", "output/mask_t2.tiff", "output/mask_t3.tiff"]
+prediction_files = ["output/predicted_t1.tiff", "output/predicted_t2.tiff", "output/predicted_t3.tiff"]
 
 # Function to read and stack the RGB bands of a TIFF
 def read_rgb_image(tiff_path):
