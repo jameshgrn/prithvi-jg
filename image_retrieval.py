@@ -6,7 +6,7 @@ from affine import Affine
 import numpy as np
 
 client = Client.open("https://earth-search.aws.element84.com/v1")
-collection = "sentinel-2-l2a"
+collection = "sentinel-2-l2a-cogs"
 tas_bbox = [146.5, -43.6, 146.7, -43.4]
 
 # Define the time intervals
@@ -17,7 +17,8 @@ output_files = ["/N/u/jhgearon/Quartz/prithvi-jg/images/t1.tif", "/N/u/jhgearon/
 scale_factor = 0.0001
 
 for i, time_interval in enumerate(time_intervals):
-    search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval)
+    search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval, query={"eo:cloud_cover":{"lt":10},
+                                 "sentinel:valid_cloud_cover": {"eq": True}})
     data = load(search.items(), bbox=tas_bbox, groupby="solar_day", chunks={})
     geotransform = tuple(map(float, data['spatial_ref'].attrs['GeoTransform'].split()))
     affine_transform = Affine(*geotransform[:6])
