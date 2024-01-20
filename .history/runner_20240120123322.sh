@@ -19,11 +19,9 @@ source /N/u/jhgearon/Quartz/.bashrc
 
 pip install -r requirements.txt
 
-img_path = /N/u/jhgearon/Quartz/prithvi_jg/images/
-t1.tif = img_path + t1.tif
-t2.tif = img_path + t2.tif
-t3.tif = img_path + t3.tif
+img_path = /N/u/jhgearon/Quartz/prithvi_jg/images
+
 
 cd /N/u/jhgearon/Quartz/Prithvi_100M
 
-python Prithvi_run_inference.py --data_files t1.tif t2.tif t3.tif --yaml_file_path Prithvi_100M_config.yaml --checkpoint /Prithvi_100.pth --output_dir /N/u/jhgearon/Quartz/prithvi_jg/output --mask_ratio 0.5
+python Prithvi_run_inference.py --data_files t1.tif t2.tif t3.tif --yaml_file_path /path/to/yaml/Prithvi_100.yaml --checkpoint /Prithvi_100.pth --output_dir /path/to/out/dir/ --mask_ratio 0.5

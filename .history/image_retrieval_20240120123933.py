@@ -14,5 +14,5 @@ for i, time_interval in enumerate(time_intervals):
     search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval)
     data = load(search.items(), bbox=tas_bbox, groupby="solar_day", chunks={})
     # Save the red, green, blue bands of the image to a tif file
-    with rasterio.open(output_files[i], 'w', driver='GTiff', height=data.shape[1], width=data.shape[2], count=3, dtype=data.dtype) as dst:
-        dst.write(data[["red", "green", "blue"]].isel(time=0).to_array())
+data = load(search.items(), bbox=tas_bbox, groupby="solar_day", chunks={})
+data[["red", "green", "blue"]].isel(time=2).to_array().plot.imshow(robust=True)
