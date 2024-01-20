@@ -21,7 +21,7 @@ def read_single_band_image(image_path):
         return src.read(1)
 
 # Create a 3x3 plot matrix
-fig, axs = plt.subplots(3, 3, figsize=(15, 15))
+fig, axs = plt.subplots(3, 3, figsize=(5, 8))
 
 for i in range(3):
     # Plot original TIFFs (RGB)
