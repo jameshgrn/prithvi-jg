@@ -3,7 +3,7 @@ import numpy as np
 import rasterio
 
 # Define file paths for the TIFFs, masks, and predictions
-tiff_files = ["images/t0.tif", "images/t1.tif", "images/t2.tif"]
+tiff_files = ["images/t1.tif", "images/t2.tif", "images/t3.tif"]
 mask_files = ["output/mask_t0.tiff", "output/mask_t1.tiff", "output/mask_t2.tiff"]
 prediction_files = ["output/predicted_t0.tiff", "output/predicted_t1.tiff", "output/predicted_t2.tiff"]
 
