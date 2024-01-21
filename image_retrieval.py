@@ -6,6 +6,9 @@ import numpy as np
 import geopandas as gpd
 import yaml
 
+# Add necessary imports from image_analysis
+from image_analysis import load_example, predict_on_images, save_geotiff
+
 client = Client.open("https://earth-search.aws.element84.com/v1")
 collection = "sentinel-2-l2a"
 
@@ -28,6 +31,10 @@ def calculate_band_statistics(xr_dataset, bands):
         }
     return stats
 
+# Load the YAML configuration file before the loop if the config is not meant to change per iteration
+with open('Prithvi_100M_config.yaml') as f:
+    config = yaml.safe_load(f)
+
 for i, time_interval in enumerate(time_intervals):
     # Search for items in the collection within the time interval
     search = client.search(
@@ -45,21 +52,24 @@ for i, time_interval in enumerate(time_intervals):
     selected_item = min(items, key=lambda item: item.properties["eo:cloud_cover"])
     print(f"Selected item {selected_item.id} with cloud cover: {selected_item.properties['eo:cloud_cover']}%")
     
-    # Load the data using odc-stac
-    data = load([selected_item], bbox=tas_bbox, groupby="solar_day", chunks={}, crs="EPSG:3857")
-    
-    # Create a Dataset with each band as a separate variable
-    xr_dataset = xr.Dataset()
-    bands_to_save = ['blue', 'green', 'red', 'nir', 'swir16', 'swir22']
-    for band_name in bands_to_save:
-        # Assuming data[band_name] is a DataArray with the band data
-        xr_dataset[band_name] = data[band_name].isel(time=0) #* scale_factor
+    bands_to_save = ['blue', 'red', 'green', 'nir', 'swir16', 'swir22']
+    mask_ratio = 0.5
+    checkpoint_path = 'checkpoints/Prithvi_100M.pth'
 
-    # Set the CRS for the dataset
-    xr_dataset.rio.write_crs(data['spatial_ref'].attrs['crs_wkt'], inplace=True)
+    # Assuming bands_to_save is a list of band names that correspond to keys in the assets dictionary
+    image_file_paths = [selected_item.assets[band].href for band in bands_to_save]
 
-    # After creating the xr_dataset with all bands
-    band_statistics = calculate_band_statistics(xr_dataset, bands_to_save)
+    # Load the images using the method from image_analysis
+    image_data, meta_data = load_example(file_paths=image_file_paths, mean=config['train_params']['data_mean'], std=config['train_params']['data_std'])
+
+    # Process and analyze the images
+    outputs = predict_on_images(data_files=image_file_paths, mask_ratio=mask_ratio, yaml_file_path='Prithvi_100M_config.yaml', checkpoint=checkpoint_path)
+
+    # Save the results as GeoTIFF
+    for t, (input_img, rec_img, mask_img) in enumerate(zip(outputs[0], outputs[1], outputs[2])):
+        save_geotiff(image=_convert_np_uint8(input_img), output_path=f"original_rgb_t{t}.tiff", meta=meta_data[t])
+        save_geotiff(image=_convert_np_uint8(rec_img), output_path=f"predicted_rgb_t{t}.tiff", meta=meta_data[t])
+        save_geotiff(image=_convert_np_uint8(mask_img), output_path=f"masked_rgb_t{t}.tiff", meta=meta_data[t])
 
     # Now update the YAML configuration file
     with open('Prithvi_100M_config.yaml') as f:
