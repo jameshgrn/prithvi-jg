@@ -42,7 +42,7 @@ for i, time_interval in enumerate(time_intervals):
     bands_to_save = ['blue', 'green', 'red', 'nir', 'swir16', 'swir22']
     for band_name in bands_to_save:
         # Assuming data[band_name] is a DataArray with the band data
-        xr_dataset[band_name] = data[band_name].isel(time=0) * scale_factor
+        xr_dataset[band_name] = data[band_name].isel(time=0) #* scale_factor
 
     # Set the CRS for the dataset
     xr_dataset.rio.write_crs(data['spatial_ref'].attrs['crs_wkt'], inplace=True)
