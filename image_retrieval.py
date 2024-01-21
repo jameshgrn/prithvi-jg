@@ -1,43 +1,52 @@
 from pystac_client import Client
 from odc.stac import load
-import rasterio
-from rasterio.crs import CRS
-from affine import Affine
+import rioxarray
+import xarray as xr
 import numpy as np
+import geopandas as gpd
 
 client = Client.open("https://earth-search.aws.element84.com/v1")
-collection = "sentinel-2-l2a-cogs"
+collection = "sentinel-2-l2a"
+
+# new bbox
 tas_bbox = [146.5, -43.6, 146.7, -43.4]
-
 # Define the time intervals
-time_intervals = ["2023-01", "2023-06", "2023-12"]
-output_files = ["/N/u/jhgearon/Quartz/prithvi-jg/images/t1.tif", "/N/u/jhgearon/Quartz/prithvi-jg/images/t2.tif", "/N/u/jhgearon/Quartz/prithvi-jg/images/t3.tif"]
-
+time_intervals = ["2019-01-01/2019-12-31", "2020-01-01/2020-12-31", "2023-01-01/2023-12-31"]
+output_files = ["images/t1.tif", "images/t2.tif", "images/t3.tif"]
 # Scale factor for converting raw data numbers into reflectance
 scale_factor = 0.0001
+# Define the maximum acceptable cloud cover percentage
+max_cloud_cover = 70
 
 for i, time_interval in enumerate(time_intervals):
-    search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval, query={"eo:cloud_cover":{"lt":10},
-                                 "sentinel:valid_cloud_cover": {"eq": True}})
-    data = load(search.items(), bbox=tas_bbox, groupby="solar_day", chunks={})
-    geotransform = tuple(map(float, data['spatial_ref'].attrs['GeoTransform'].split()))
-    affine_transform = Affine(*geotransform[:6])
-    crs_wkt = data['spatial_ref'].attrs['crs_wkt']
-    crs = rasterio.crs.CRS.from_wkt(crs_wkt)
-    bands_to_save = ['blue', 'green', 'red', 'nir', 'swir16', 'swir22']
-    band_count = len(bands_to_save)
+    # Search for items in the collection within the time interval
+    search = client.search(
+        collections=[collection],
+        bbox=tas_bbox,
+        datetime=time_interval,
+        limit=100)  # Increase limit if needed)
+    items = list(search.get_all_items())
     
-    # Save the specified bands of the image to a tif file
-    with rasterio.open(output_files[i], 'w', driver='GTiff', 
-                       height=data['red'].shape[1], 
-                       width=data['red'].shape[2], 
-                       count=band_count, 
-                       dtype=rasterio.float32,  # Change dtype to float32 for reflectance values
-                       crs=crs,
-                       transform=affine_transform) as dst:
-        for j, band in enumerate(bands_to_save):
-            # Apply the scale factor to convert to reflectance
-            reflectance_data = data[band].isel(time=0).values * scale_factor
-            # Ensure data is in float32 format for reflectance
-            reflectance_data = reflectance_data.astype(np.float32)
-            dst.write(reflectance_data, j + 1)
+    if not items:
+        print(f"No images found for time interval {time_interval}")
+        continue
+
+    # Sort the items by cloud cover and select the one with the lowest value
+    selected_item = min(items, key=lambda item: item.properties["eo:cloud_cover"])
+    print(f"Selected item {selected_item.id} with cloud cover: {selected_item.properties['eo:cloud_cover']}%")
+    
+    # Load the data using odc-stac
+    data = load([selected_item], bbox=tas_bbox, groupby="solar_day", chunks={}, crs="EPSG:3857")
+    
+    # Create a Dataset with each band as a separate variable
+    xr_dataset = xr.Dataset()
+    bands_to_save = ['blue', 'green', 'red', 'nir', 'swir16', 'swir22']
+    for band_name in bands_to_save:
+        # Assuming data[band_name] is a DataArray with the band data
+        xr_dataset[band_name] = data[band_name].isel(time=0) * scale_factor
+
+    # Set the CRS for the dataset
+    xr_dataset.rio.write_crs(data['spatial_ref'].attrs['crs_wkt'], inplace=True)
+
+    # Write the dataset to a raster file
+    xr_dataset.rio.to_raster(output_files[i])
