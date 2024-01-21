@@ -4,6 +4,7 @@ import rioxarray
 import xarray as xr
 import numpy as np
 import geopandas as gpd
+import yaml
 
 client = Client.open("https://earth-search.aws.element84.com/v1")
 collection = "sentinel-2-l2a"
@@ -16,6 +17,16 @@ output_files = ["images/t1.tif", "images/t2.tif", "images/t3.tif"]
 # Scale factor for converting raw data numbers into reflectance
 scale_factor = 0.0001
 # Define the maximum acceptable cloud cover percentage
+
+# Define a function to calculate mean and std for each band
+def calculate_band_statistics(xr_dataset, bands):
+    stats = {}
+    for band in bands:
+        stats[band] = {
+            'mean': float(xr_dataset[band].mean().values),
+            'std': float(xr_dataset[band].std().values)
+        }
+    return stats
 
 for i, time_interval in enumerate(time_intervals):
     # Search for items in the collection within the time interval
@@ -47,5 +58,21 @@ for i, time_interval in enumerate(time_intervals):
     # Set the CRS for the dataset
     xr_dataset.rio.write_crs(data['spatial_ref'].attrs['crs_wkt'], inplace=True)
 
+    # After creating the xr_dataset with all bands
+    band_statistics = calculate_band_statistics(xr_dataset, bands_to_save)
+
+    # Now update the YAML configuration file
+    with open('Prithvi_100M_config.yaml') as f:
+        config = yaml.safe_load(f)
+
+    # Update the means and stds in the config
+    config['train_params']['data_mean'] = [band_statistics[band]['mean'] for band in bands_to_save]
+    config['train_params']['data_std'] = [band_statistics[band]['std'] for band in bands_to_save]
+
+    # Write the updated configuration back to the file
+    with open('Prithvi_100M_config.yaml', 'w') as f:
+        yaml.safe_dump(config, f)
+
     # Write the dataset to a raster file
     xr_dataset.rio.to_raster(output_files[i])
+
