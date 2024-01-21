@@ -16,7 +16,6 @@ output_files = ["images/t1.tif", "images/t2.tif", "images/t3.tif"]
 # Scale factor for converting raw data numbers into reflectance
 scale_factor = 0.0001
 # Define the maximum acceptable cloud cover percentage
-max_cloud_cover = 70
 
 for i, time_interval in enumerate(time_intervals):
     # Search for items in the collection within the time interval

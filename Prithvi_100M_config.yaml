@@ -12,12 +12,12 @@ model_args:
   tubelet_size: 1
 train_params:
   bands:
-  - B02
-  - B03
-  - B04
-  - B05
-  - B06
-  - B07
+  - blue
+  - green
+  - red
+  - nir
+  - swir16
+  - swir22
   data_mean:
   - 775.2290211032589
   - 1080.992780391705
