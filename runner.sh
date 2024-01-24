@@ -25,5 +25,5 @@ t2="${img_path}t2.tif"
 t3="${img_path}t3.tif"
 
 python image_retrieval.py
-#python Prithvi_run_inference.py --data_files $t1 $t2 $t3 --yaml_file_path Prithvi_100M_config.yaml --checkpoint Prithvi_100M.pt --output_dir output --mask_ratio 0.5
+python Prithvi_run_inference.py --data_files $t1 $t2 $t3 --yaml_file_path Prithvi_100M_config.yaml --checkpoint Prithvi_100M.pt --output_dir output --mask_ratio 0.5
 python image_plotting.py
