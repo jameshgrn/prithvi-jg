@@ -319,7 +319,7 @@ def main(data_files: List[str], yaml_file_path: str, checkpoint: str, output_dir
     # Running model --------------------------------------------------------------------------------
 
     model.eval()
-    channels = [bands.index(b) for b in ['B04', 'B03', 'B02']]  # BGR -> RGB
+    channels = [bands.index(b) for b in ['blue', 'green', 'red']]  # BGR -> RGB
 
     # Reflect pad if not divisible by img_size
     original_h, original_w = input_data.shape[-2:]
