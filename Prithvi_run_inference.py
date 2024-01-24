@@ -120,17 +120,23 @@ def load_example(file_paths: List[str], mean: List[float], std: List[float]):
     imgs = []
     metas = []
 
-    # Calculate new size that is divisible by 224
-    target_size = (224 * (2227 // 224), 224 * (3070 // 224))
+    # Find the smallest dimensions
+    min_height = min_width = float('inf')
+    for file in file_paths:
+        with rasterio.open(file) as src:
+            if src.width < min_width:
+                min_width = src.width
+            if src.height < min_height:
+                min_height = src.height
+
+    # Ensure the dimensions are divisible by 224 for the model
+    min_width = (min_width // 224) * 224
+    min_height = (min_height // 224) * 224
 
     for file in file_paths:
         img, meta = read_geotiff(file)
-        img = img[:6]*10000 if img[:6].mean() <= 2 else img[:6]
-
-        # Crop the image to the target size
-        start_x = (img.shape[1] - target_size[0]) // 2
-        start_y = (img.shape[2] - target_size[1]) // 2
-        img = img[:, start_x:start_x + target_size[0], start_y:start_y + target_size[1]]
+        # Crop to the smallest size
+        img = img[:, :min_height, :min_width]
 
         # Rescaling (don't normalize on nodata)
         img = np.moveaxis(img, 0, -1)   # channels last for rescaling
@@ -140,7 +146,7 @@ def load_example(file_paths: List[str], mean: List[float], std: List[float]):
         metas.append(meta)
 
     imgs = np.stack(imgs, axis=0)    # num_frames, H, W, C
-    imgs = np.moveaxis(imgs, -1, 0).astype('float32')  # C, num_frames, H, W
+    imgs = np.moveaxis(imgs, -1, 1).astype('float32')  # C, num_frames, H, W
     imgs = np.expand_dims(imgs, axis=0)  # add batch dim
 
     return imgs, metas
