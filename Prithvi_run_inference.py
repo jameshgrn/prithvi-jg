@@ -108,12 +108,10 @@ def _convert_np_uint8(float_image: torch.Tensor):
 
 def load_example(file_paths: List[str], mean: List[float], std: List[float]):
     """ Build an input example by loading images in *file_paths*.
-
     Args:
-        file_paths: list of file paths .
+        file_paths: list of file paths.
         mean: list containing mean values for each band in the images in *file_paths*.
         std: list containing std values for each band in the images in *file_paths*.
-
     Returns:
         np.array containing created example
         list of meta info for each image in *file_paths*
@@ -122,8 +120,17 @@ def load_example(file_paths: List[str], mean: List[float], std: List[float]):
     imgs = []
     metas = []
 
+    # Calculate new size that is divisible by 224
+    target_size = (224 * (2227 // 224), 224 * (3070 // 224))
+
     for file in file_paths:
         img, meta = read_geotiff(file)
+        img = img[:6]*10000 if img[:6].mean() <= 2 else img[:6]
+
+        # Crop the image to the target size
+        start_x = (img.shape[1] - target_size[0]) // 2
+        start_y = (img.shape[2] - target_size[1]) // 2
+        img = img[:, start_x:start_x + target_size[0], start_y:start_y + target_size[1]]
 
         # Rescaling (don't normalize on nodata)
         img = np.moveaxis(img, 0, -1)   # channels last for rescaling
