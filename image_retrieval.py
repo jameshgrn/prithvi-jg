@@ -13,7 +13,7 @@ client = Client.open("https://earth-search.aws.element84.com/v1")
 collection = "sentinel-2-l2a"
 
 # new bbox
-tas_bbox = [146.5, -43.6, 146.7, -43.4]
+tas_bbox = [-72.33199899636085, 8.597982612737141, -72.28956118968598, 8.655018875697806]
 # Define the time intervals
 time_intervals = ["2019-01-01/2019-12-31", "2020-01-01/2020-12-31", "2023-01-01/2023-12-31"]
 output_files = ["images/t1.tif", "images/t2.tif", "images/t3.tif"]
@@ -42,7 +42,7 @@ for i, time_interval in enumerate(time_intervals):
         bbox=tas_bbox,
         datetime=time_interval,
         limit=100)  # Increase limit if needed)
-    items = list(search.get_all_items())
+    items = list(search.item_collection())
     
     if not items:
         print(f"No images found for time interval {time_interval}")
