@@ -7,7 +7,7 @@ import geopandas as gpd
 import yaml
 
 # Add necessary imports from image_analysis
-from image_analysis import load_example, predict_on_images, save_geotiff
+from image_formatting import load_example, predict_on_images, save_geotiff
 
 client = Client.open("https://earth-search.aws.element84.com/v1")
 collection = "sentinel-2-l2a"
