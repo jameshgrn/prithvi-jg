@@ -6,6 +6,11 @@ import numpy as np
 import geopandas as gpd
 import yaml
 import os
+import cv2
+import os
+import numpy as np
+import requests
+from io import BytesIO
 
 # Add necessary imports from image_analysis
 from image_formatting import load_example, predict_on_images, save_geotiff
@@ -20,6 +25,34 @@ time_intervals = ["2019-01-01/2019-12-31", "2020-01-01/2020-12-31", "2023-01-01/
 output_files = ["images/t1.tif", "images/t2.tif", "images/t3.tif"]
 # Scale factor for converting raw data numbers into reflectance
 scale_factor = 0.0001
+
+
+def download_image(url):
+    response = requests.get(url)
+    if response.status_code == 200:
+        image = cv2.imdecode(np.frombuffer(response.content, np.uint8), cv2.IMREAD_UNCHANGED)
+        return image
+    else:
+        print(f"Error downloading {url}, status code: {response.status_code}")
+        return None
+
+def resize_images_to_common_shape_and_save(image_file_paths, output_dir="resized_images"):
+    target_shape = (256, 256)  # Example target shape
+    resized_image_paths = []
+    if not os.path.exists(output_dir):
+        os.makedirs(output_dir)
+    for url in image_file_paths:
+        img = download_image(url)
+        if img is not None:
+            resized_img = cv2.resize(img, target_shape, interpolation=cv2.INTER_AREA)
+            # Generate a new file path
+            base_name = os.path.basename(url)
+            new_path = os.path.join(output_dir, base_name)
+            cv2.imwrite(new_path, resized_img)
+            resized_image_paths.append(new_path)
+        else:
+            print(f"Failed to process image from {url}")
+    return resized_image_paths
 
 # Check if the data t1.tif, t2.tif, and t3.tif exist in the images folder
 existing_files = [f for f in output_files if os.path.isfile(f)]
@@ -71,10 +104,13 @@ else:
         image_file_paths = [selected_item.assets[band].href for band in bands_to_save]
 
         # Load the images using the method from image_analysis
-        image_data, meta_data = load_example(file_paths=image_file_paths, mean=config['train_params']['data_mean'], std=config['train_params']['data_std'])
-
+        resized_image_paths = resize_images_to_common_shape_and_save(image_file_paths)
+        image_data, meta_data = load_example(file_paths=resized_image_paths, mean=config['train_params']['data_mean'], std=config['train_params']['data_std'])
+        # Assuming image_file_paths contains URLs to all the images
+        # Select only the first three images
+        selected_image_paths = image_file_paths[:3]
         # Process and analyze the images
-        outputs = predict_on_images(data_files=image_file_paths, mask_ratio=mask_ratio, yaml_file_path='Prithvi_100M_config.yaml', checkpoint=checkpoint_path)
+        outputs = predict_on_images(data_files=selected_image_paths, mask_ratio=mask_ratio, yaml_file_path='Prithvi_100M_config.yaml', checkpoint=checkpoint_path)
 
         # Save the results as GeoTIFF
         for t, (input_img, rec_img, mask_img) in enumerate(zip(outputs[0], outputs[1], outputs[2])):

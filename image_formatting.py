@@ -264,8 +264,10 @@ def predict_on_images(data_files: list, mask_ratio: float, yaml_file_path: str, 
     batch_size = 8
 
     mask_ratio = train_params['mask_ratio'] if mask_ratio is None else mask_ratio
-
+    
     # We must have *num_frames* files to build one example!
+    print(f"Expected number of frames: {num_frames}, Actual number of files: {len(data_files)}")
+
     assert len(data_files) == num_frames, "File list must be equal to expected number of frames."
 
     if torch.cuda.is_available():
@@ -296,7 +298,7 @@ def predict_on_images(data_files: list, mask_ratio: float, yaml_file_path: str, 
     # Running model --------------------------------------------------------------------------------
 
     model.eval()
-    channels = [bands.index(b) for b in ['B04', 'B03', 'B02']]  # BGR -> RGB
+    channels = [bands.index(b) for b in ['blue', 'green', 'red']]  # BGR -> RGB
     
     # Reflect pad if not divisible by img_size
     original_h, original_w = input_data.shape[-2:]
