@@ -108,9 +108,8 @@ else:
         image_data, meta_data = load_example(file_paths=resized_image_paths, mean=config['train_params']['data_mean'], std=config['train_params']['data_std'])
         # Assuming image_file_paths contains URLs to all the images
         # Select only the first three images
-        selected_image_paths = image_file_paths[:3]
         # Process and analyze the images
-        outputs = predict_on_images(data_files=selected_image_paths, mask_ratio=mask_ratio, yaml_file_path='Prithvi_100M_config.yaml', checkpoint=checkpoint_path)
+        outputs = predict_on_images(data_files=resized_image_paths, mask_ratio=mask_ratio, yaml_file_path='Prithvi_100M_config.yaml', checkpoint=checkpoint_path)
 
         # Save the results as GeoTIFF
         for t, (input_img, rec_img, mask_img) in enumerate(zip(outputs[0], outputs[1], outputs[2])):
