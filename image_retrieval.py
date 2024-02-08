@@ -38,7 +38,7 @@ def stack_bands(band_paths, output_path):
 
 # Main process
 if __name__ == "__main__":
-    for i, time_interval in enumerate(time_intervals):
+    for i, time_interval in enumerate(1, time_intervals):
         search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval, max_items=10)
         bands_order = ['blue', 'red', 'green', 'nir', 'swir16', 'swir22']
         items = list(search.item_collection())
