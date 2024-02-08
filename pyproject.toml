@@ -21,6 +21,7 @@ einops = "^0.7.0"
 gradio = "^4.15.0"
 ipywidgets = "^8.1.1"
 opencv-python = "^4.9.0.80"
+rasterio = "^1.3.9"
 
 
 [tool.poetry.group.dev.dependencies]

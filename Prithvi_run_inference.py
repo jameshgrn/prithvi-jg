@@ -77,8 +77,8 @@ def read_geotiff(file_path: str):
 
     with rasterio.open(file_path) as src:
         img = src.read()
+        print(f"Loaded image shape: {img.shape}")  # Add this line to check the shape
         meta = src.meta
-
     return img, meta
 
 
@@ -104,38 +104,6 @@ def _convert_np_uint8(float_image: torch.Tensor):
     image = image.astype(dtype=np.uint8)
 
     return image
-
-def load_multiband_image(file_path: str, mean: List[float], std: List[float]):
-    """ Build an input example by loading a multiband image from *file_path*.
-    Args:
-        file_path: path to the multiband file.
-        mean: list containing mean values for each band in the image.
-        std: list containing std values for each band in the image.
-    Returns:
-        np.array containing the processed image
-        dict with meta info for the image
-    """
-
-    # Read the multiband image
-    img, meta = read_geotiff(file_path)
-
-    # Ensure the dimensions are divisible by 224 for the model
-    height, width = img.shape[1], img.shape[2]
-    min_height = (height // 224) * 224
-    min_width = (width // 224) * 224
-
-    # Crop to the divisible size
-    img = img[:, :min_height, :min_width]
-
-    # Rescaling (don't normalize on nodata)
-    img = np.moveaxis(img, 0, -1)  # channels last for rescaling
-    for i, (m, s) in enumerate(zip(mean, std)):
-        img[..., i] = np.where(img[..., i] == NO_DATA, NO_DATA_FLOAT, (img[..., i] - m) / s)
-
-    img = np.moveaxis(img, -1, 0).astype('float32')  # C, H, W
-    img = np.expand_dims(img, axis=0)  # add batch dim: 1, C, H, W
-
-    return img, meta
 
 
 def load_image(file_paths: List[str], mean: List[float], std: List[float]):
@@ -172,7 +140,8 @@ def load_image(file_paths: List[str], mean: List[float], std: List[float]):
 
         # Rescaling (don't normalize on nodata)
         img = np.moveaxis(img, 0, -1)   # channels last for rescaling
-        img = np.where(img == NO_DATA, NO_DATA_FLOAT, (img - mean) / std)
+        for i, (m, s) in enumerate(zip(mean, std)):
+            img[..., i] = np.where(img[..., i] == NO_DATA, NO_DATA_FLOAT, (img[..., i] - m) / s)
 
         imgs.append(img)
         metas.append(meta)
@@ -180,8 +149,10 @@ def load_image(file_paths: List[str], mean: List[float], std: List[float]):
     imgs = np.stack(imgs, axis=0)    # num_frames, H, W, C
     imgs = np.moveaxis(imgs, -1, 1).astype('float32')  # C, num_frames, H, W
     imgs = np.expand_dims(imgs, axis=0)  # add batch dim
+    imgs_tensor = torch.from_numpy(imgs).float()  # Ensure float type for PyTorch operations
 
-    return imgs, metas
+
+    return imgs_tensor, metas
 
 
 def run_model(model: torch.nn.Module, input_data: torch.Tensor, mask_ratio: float, device: torch.device):
@@ -199,7 +170,7 @@ def run_model(model: torch.nn.Module, input_data: torch.Tensor, mask_ratio: floa
 
     with torch.no_grad():
         x = input_data.to(device)
-
+        print(f"Input tensor shape before model forward pass: {x.shape}")  # Add this line
         _, pred, mask = model(x, mask_ratio)
 
     # Create mask and prediction images (un-patchify)
@@ -330,6 +301,8 @@ def main(data_files: List[str], yaml_file_path: str, checkpoint: str, output_dir
     # Loading data ---------------------------------------------------------------------------------
 
     input_data, meta_data = load_image(file_paths=data_files, mean=mean, std=std)
+    input_data = input_data.permute(0, 2, 1, 3, 4)  # Adjusting from [B, T, C, H, W] to [B, C, T, H, W]
+
 
     # Create model and load checkpoint -------------------------------------------------------------
 
@@ -373,7 +346,7 @@ def main(data_files: List[str], yaml_file_path: str, checkpoint: str, output_dir
     input_data = np.pad(input_data, ((0, 0), (0, 0), (0, 0), (0, pad_h), (0, pad_w)), mode='reflect')
 
     # Build sliding window
-    batch = torch.tensor(input_data, device='cuda')
+    batch = torch.tensor(input_data, device='cpu')
     windows = batch.unfold(3, img_size, img_size).unfold(4, img_size, img_size)
     h1, w1 = windows.shape[3:5]
     windows = rearrange(windows, 'b c t h1 w1 h w -> (b h1 w1) c t h w', h=img_size, w=img_size)
