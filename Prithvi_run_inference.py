@@ -105,8 +105,40 @@ def _convert_np_uint8(float_image: torch.Tensor):
 
     return image
 
+def load_multiband_image(file_path: str, mean: List[float], std: List[float]):
+    """ Build an input example by loading a multiband image from *file_path*.
+    Args:
+        file_path: path to the multiband file.
+        mean: list containing mean values for each band in the image.
+        std: list containing std values for each band in the image.
+    Returns:
+        np.array containing the processed image
+        dict with meta info for the image
+    """
 
-def load_example(file_paths: List[str], mean: List[float], std: List[float]):
+    # Read the multiband image
+    img, meta = read_geotiff(file_path)
+
+    # Ensure the dimensions are divisible by 224 for the model
+    height, width = img.shape[1], img.shape[2]
+    min_height = (height // 224) * 224
+    min_width = (width // 224) * 224
+
+    # Crop to the divisible size
+    img = img[:, :min_height, :min_width]
+
+    # Rescaling (don't normalize on nodata)
+    img = np.moveaxis(img, 0, -1)  # channels last for rescaling
+    for i, (m, s) in enumerate(zip(mean, std)):
+        img[..., i] = np.where(img[..., i] == NO_DATA, NO_DATA_FLOAT, (img[..., i] - m) / s)
+
+    img = np.moveaxis(img, -1, 0).astype('float32')  # C, H, W
+    img = np.expand_dims(img, axis=0)  # add batch dim: 1, C, H, W
+
+    return img, meta
+
+
+def load_image(file_paths: List[str], mean: List[float], std: List[float]):
     """ Build an input example by loading images in *file_paths*.
     Args:
         file_paths: list of file paths.
@@ -297,7 +329,7 @@ def main(data_files: List[str], yaml_file_path: str, checkpoint: str, output_dir
 
     # Loading data ---------------------------------------------------------------------------------
 
-    input_data, meta_data = load_example(file_paths=data_files, mean=mean, std=std)
+    input_data, meta_data = load_multiband_image(file_path=data_files, mean=mean, std=std)
 
     # Create model and load checkpoint -------------------------------------------------------------
 
@@ -341,7 +373,7 @@ def main(data_files: List[str], yaml_file_path: str, checkpoint: str, output_dir
     input_data = np.pad(input_data, ((0, 0), (0, 0), (0, 0), (0, pad_h), (0, pad_w)), mode='reflect')
 
     # Build sliding window
-    batch = torch.tensor(input_data, device='cpu')
+    batch = torch.tensor(input_data, device='gpu')
     windows = batch.unfold(3, img_size, img_size).unfold(4, img_size, img_size)
     h1, w1 = windows.shape[3:5]
     windows = rearrange(windows, 'b c t h1 w1 h w -> (b h1 w1) c t h w', h=img_size, w=img_size)
