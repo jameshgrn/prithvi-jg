@@ -39,7 +39,8 @@ def stack_bands(band_paths, output_path):
 # Main process
 if __name__ == "__main__":
     for i, time_interval in enumerate(time_intervals, start=1):
-        search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval, max_items=10)
+        search = client.search(collections=[collection], bbox=tas_bbox, datetime=time_interval, max_items=10, query = {"eo:cloud_cover":{"lt":0.2}})
+        
         bands_order = ['blue', 'red', 'green', 'nir', 'swir16', 'swir22']
         items = list(search.item_collection())
         # selected_item = min(items, key=lambda item: item.properties["eo:cloud_cover"])

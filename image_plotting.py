@@ -1,19 +1,32 @@
 import matplotlib.pyplot as plt
 import numpy as np
 import rasterio
+from matplotlib.colors import Normalize
+
 
 # Define file paths for the TIFFs, masks, and predictions
 tiff_files = ["images/t1.tif", "images/t2.tif", "images/t3.tif"]
 mask_files = ["output/mask_t0.tiff", "output/mask_t1.tiff", "output/mask_t2.tiff"]
 prediction_files = ["output/predicted_t0.tiff", "output/predicted_t1.tiff", "output/predicted_t2.tiff"]
 
-# Function to read and stack the RGB bands of a TIFF
-def read_rgb_image(tiff_path):
+def read_rgb_image(tiff_path, clip_percentile=99):
     with rasterio.open(tiff_path) as src:
         red = src.read(3)
         green = src.read(2)
         blue = src.read(1)
-    return np.stack((red, green, blue), axis=-1)
+
+    # Stack the bands
+    rgb = np.stack((red, green, blue), axis=-1)
+
+    # Optionally clip the upper percentile to remove bright outliers
+    if clip_percentile:
+        vmax = np.percentile(rgb, clip_percentile)
+        rgb = np.clip(rgb, a_min=0, a_max=vmax)
+
+    # Normalize the image data
+    rgb_normalized = Normalize(vmin=0, vmax=vmax)(rgb)
+
+    return rgb_normalized
 
 # Function to read a single-band image (mask or prediction)
 def read_single_band_image(image_path):

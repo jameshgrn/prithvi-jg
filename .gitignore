@@ -7,3 +7,11 @@ images/t3.tif.aux.xml
 images/t1.tif
 images/t2.tif
 images/t3.tif
+output/
+output/mask_t0.tiff
+output/mask_t1.tiff
+output/mask_t2.tiff
+output/plot.png
+output/predicted_t0.tiff
+output/predicted_t1.tiff
+output/predicted_t2.tiff
