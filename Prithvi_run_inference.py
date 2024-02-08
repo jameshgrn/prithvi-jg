@@ -329,7 +329,7 @@ def main(data_files: List[str], yaml_file_path: str, checkpoint: str, output_dir
 
     # Loading data ---------------------------------------------------------------------------------
 
-    input_data, meta_data = load_image(file_path=data_files, mean=mean, std=std)
+    input_data, meta_data = load_image(file_paths=data_files, mean=mean, std=std)
 
     # Create model and load checkpoint -------------------------------------------------------------
 
