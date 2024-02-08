@@ -373,7 +373,7 @@ def main(data_files: List[str], yaml_file_path: str, checkpoint: str, output_dir
     input_data = np.pad(input_data, ((0, 0), (0, 0), (0, 0), (0, pad_h), (0, pad_w)), mode='reflect')
 
     # Build sliding window
-    batch = torch.tensor(input_data, device='gpu')
+    batch = torch.tensor(input_data, device='cuda')
     windows = batch.unfold(3, img_size, img_size).unfold(4, img_size, img_size)
     h1, w1 = windows.shape[3:5]
     windows = rearrange(windows, 'b c t h1 w1 h w -> (b h1 w1) c t h w', h=img_size, w=img_size)
