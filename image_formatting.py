@@ -105,7 +105,7 @@ def _convert_np_uint8(float_image: torch.Tensor):
     return image
 
 
-def load_example(file_paths: List[str], mean: List[float], std: List[float]):
+def load_images(file_paths: List[str], mean: List[float], std: List[float]):
     """ Build an input example by loading images in *file_paths*.
     Args:
         file_paths: list of file paths .
@@ -238,8 +238,7 @@ def extract_rgb_imgs(input_img, rec_img, mask_img, channels, mean, std):
 
 
 def predict_on_images(data_files: list, mask_ratio: float, yaml_file_path: str, checkpoint: str):
-
-    
+    """ Predict on input images and save outputs."""
     try:
         data_files = [x.name for x in data_files]
         print('Path extracted from example')
@@ -279,7 +278,7 @@ def predict_on_images(data_files: list, mask_ratio: float, yaml_file_path: str, 
 
     # Loading data ---------------------------------------------------------------------------------
 
-    input_data, meta_data = load_example(file_paths=data_files, mean=mean, std=std)
+    input_data, meta_data = load_images(file_paths=data_files, mean=mean, std=std)
 
     # Create model and load checkpoint -------------------------------------------------------------
 
@@ -358,7 +357,7 @@ checkpoint = 'checkpoints/Prithvi_100M.pth'
 
 func = partial(predict_on_images, yaml_file_path=yaml_file_path,checkpoint=checkpoint)
 
-def preprocess_example(example_list):
+def preprocess_images(example_list):
     print('######## preprocessing here ##########')
     example_list = [os.path.join(os.path.abspath(''), x) for x in example_list]
     
